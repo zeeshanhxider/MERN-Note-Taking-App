@@ -12,8 +12,8 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchNotes = async () => {
-      if (isRateLimited) return;
-
+        if (isRateLimited) return;
+       
       try {
         const res = await api.get("/notes");
         console.log(res.data);
