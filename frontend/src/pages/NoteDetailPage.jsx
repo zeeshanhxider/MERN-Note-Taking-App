@@ -13,7 +13,7 @@ import api from "../lib/axios";
 
 const NoteDetailPage = () => {
   const [note, setNote] = useState(null);
-  const [originalNote, setOriginalNote] = useState(null); 
+  const [originalNote, setOriginalNote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -174,7 +174,7 @@ const NoteDetailPage = () => {
                     </label>
                     <textarea
                       placeholder="Write your note here..."
-                      className="textarea textarea-bordered h-32"
+                      className="textarea textarea-bordered min-h-80 resize-y"
                       value={note.content}
                       onChange={(e) =>
                         setNote({ ...note, content: e.target.value })
@@ -184,7 +184,10 @@ const NoteDetailPage = () => {
 
                   <div className="flex justify-end items-center mt-4">
                     <div className="flex gap-3">
-                      <button onClick={handleCancel} className="btn btn-outline btn-default">
+                      <button
+                        onClick={handleCancel}
+                        className="btn btn-outline btn-default"
+                      >
                         <XIcon className="h-5 w-5" />
                         Cancel
                       </button>

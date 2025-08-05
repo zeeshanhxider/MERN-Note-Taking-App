@@ -10,17 +10,25 @@ const NoteCard = ({ note, setNotes }) => {
       : 0;
   };
 
-  // Get maximum content preview
+  // Get consistent content preview - always same length
   const getContentPreview = (content) => {
-    if (!content) return "No content available...";
+    if (!content) {
+      // Pad with placeholder text to maintain consistent height
+      return "No content available...".padEnd(120, " ");
+    }
 
-    // Show more content - up to 300 characters or 6 lines
-    const lines = content.split("\n");
-    const preview = lines.slice(0, 6).join(" ");
+    // Always show exactly 120 characters for consistency
+    const cleanContent = content
+      .replace(/\n/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
-    return preview.length > 300
-      ? preview.substring(0, 300) + "..."
-      : preview || "No content available...";
+    if (cleanContent.length >= 120) {
+      return cleanContent.substring(0, 117) + "...";
+    } else {
+      // Pad shorter content with spaces to maintain consistent height
+      return cleanContent.padEnd(120, " ");
+    }
   };
 
   return (
@@ -36,13 +44,10 @@ const NoteCard = ({ note, setNotes }) => {
               <h3 className="card-title text-lg font-bold text-base-content line-clamp-2 flex-1 pr-2">
                 {note.title}
               </h3>
-              <div className="flex items-center gap-1 text-primary/60 shrink-0">
-                <FileText className="size-4" />
-              </div>
             </div>
 
-            {/* Content preview - maximized */}
-            <p className="text-base-content/70 text-sm leading-relaxed line-clamp-6 mb-4">
+            {/* Content preview - consistent height */}
+            <p className="text-base-content/70 text-sm leading-relaxed line-clamp-3 mb-4 h-16">
               {getContentPreview(note.content)}
             </p>
 
