@@ -37,7 +37,7 @@ const Navbar = () => {
             to="/"
             className="text-2xl font-bold text-primary font-mono tracking-tight hover:text-primary-focus transition-colors"
           >
-            Scribbly
+            Scribbly AI
           </Link>
 
           {localStorage.getItem("token") && (

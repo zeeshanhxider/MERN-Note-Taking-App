@@ -42,7 +42,7 @@ const RegisterPage = () => {
         <div className="max-w-md mx-auto">
           <h1 className="text-3xl font-bold text-primary font-mono text-center py-8 mb-6">
             <span className="inline-block overflow-hidden whitespace-nowrap border-r-2 border-primary animate-typewriterBlink">
-              Welcome to Scribbly
+              Welcome to Scribbly AI
             </span>
           </h1>
           <div className="card bg-base-100 shadow-md">
