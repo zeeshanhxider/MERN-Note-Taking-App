@@ -1,8 +1,27 @@
-import { Clock, FileText, Calendar } from "lucide-react";
+import { Clock, FileText, Calendar, Trash2 } from "lucide-react";
 import { Link } from "react-router";
 import { formatDate } from "../lib/utils";
+import api from "../lib/axios";
+import toast from "react-hot-toast";
 
 const NoteCard = ({ note, setNotes }) => {
+  // Handle delete note
+  const handleDelete = async (e) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation(); // Stop event bubbling
+
+    if (!window.confirm("Are you sure you want to delete this note?")) return;
+
+    try {
+      await api.delete(`/notes/${note._id}`);
+      setNotes((prev) => prev.filter((n) => n._id !== note._id));
+      toast.success("Note deleted successfully");
+    } catch (error) {
+      console.log("Error deleting note:", error);
+      toast.error("Failed to delete note");
+    }
+  };
+
   // Get word count for content preview
   const getWordCount = (text) => {
     return text
@@ -39,7 +58,7 @@ const NoteCard = ({ note, setNotes }) => {
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary"></div>
 
           <div className="card-body p-5">
-            {/* Header with title and type indicator */}
+            {/* Header with title */}
             <div className="flex items-start justify-between mb-3">
               <h3 className="card-title text-lg font-bold text-base-content line-clamp-2 flex-1 pr-2">
                 {note.title}
@@ -60,7 +79,6 @@ const NoteCard = ({ note, setNotes }) => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span>{getWordCount(note.content)} words</span>
                 {note.updatedAt !== note.createdAt && (
                   <span className="badge badge-sm badge-ghost">Updated</span>
                 )}
@@ -69,6 +87,13 @@ const NoteCard = ({ note, setNotes }) => {
                     AI Generated
                   </span>
                 )}
+                <button
+                  onClick={handleDelete}
+                  className="btn btn-ghost btn-sm text-error"
+                  title="Delete note"
+                >
+                  <Trash2 className="size-3" />
+                </button>
               </div>
             </div>
           </div>

@@ -133,26 +133,6 @@ export const deleteFolder = async (req, res) => {
     if (!folder) {
       return res.status(404).json({ message: "Folder not found" });
     }
-
-    // Check if folder has subfolders
-    const subfolders = await Folder.countDocuments({
-      parentFolder: id,
-      user: userId,
-    });
-
-    // Check if folder has notes
-    const notes = await Note.countDocuments({
-      folder: id,
-      user: userId,
-    });
-
-    if (subfolders > 0 || notes > 0) {
-      return res.status(400).json({
-        message:
-          "Cannot delete folder that contains subfolders or notes. Please move or delete the contents first.",
-      });
-    }
-
     await Folder.findByIdAndDelete(id);
 
     res.json({ message: "Folder deleted successfully" });

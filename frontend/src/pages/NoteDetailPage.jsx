@@ -142,6 +142,7 @@ const NoteDetailPage = () => {
                       className="btn btn-error btn-outline"
                     >
                       <Trash2Icon className="h-5 w-5" />
+                      Delete Note
                     </button>
 
                     <button onClick={handleEdit} className="btn btn-primary">
