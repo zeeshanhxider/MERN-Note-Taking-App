@@ -1,14 +1,24 @@
-import { ArrowLeftIcon, Upload, FileText } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  Upload,
+  FileText,
+  Sparkles,
+  FileCheck,
+  Wand2,
+  CheckCircle,
+  AlertCircle,
+  Eye,
+  Edit,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import api from "../lib/axios";
+import { formatText, hasFormatting } from "../lib/textFormatter";
 
 const CreatePage = () => {
   const [searchParams] = useSearchParams();
   const currentFolder = searchParams.get("folder") || null;
-
-  console.log("CreatePage - currentFolder:", currentFolder); // Debug log
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -19,6 +29,16 @@ const CreatePage = () => {
   const [typewriterText, setTypewriterText] = useState("");
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
 
+  // AI Features state
+  const [aiSummary, setAiSummary] = useState("");
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [writingAssistance, setWritingAssistance] = useState("");
+  const [isCheckingWriting, setIsCheckingWriting] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+
+  // Text formatting preview
+  const [showPreview, setShowPreview] = useState(false);
+
   const processingMessages = [
     "Extracting text from PDF...",
     "AI is reading through your content...",
@@ -28,6 +48,78 @@ const CreatePage = () => {
   ];
 
   const navigate = useNavigate();
+
+  // AI Writing Assistant Function
+  const checkWriting = async () => {
+    if (!content.trim()) {
+      toast.error("Please write some content first");
+      return;
+    }
+
+    setIsCheckingWriting(true);
+    try {
+      const response = await api.post("/ai/writing-assistant", {
+        content: content,
+      });
+      setWritingAssistance(response.data.suggestions);
+      setShowAiPanel(true);
+      toast.success("Writing analysis complete!");
+    } catch (error) {
+      console.error("Error checking writing:", error);
+
+      // Handle specific error types
+      if (error.response?.status === 429) {
+        toast.error("AI service quota exceeded. Please try again later.");
+      } else if (error.response?.status === 503) {
+        toast.error(
+          "AI service is temporarily unavailable. Please try again later."
+        );
+      } else {
+        toast.error("Failed to analyze writing. Please try again.");
+      }
+    } finally {
+      setIsCheckingWriting(false);
+    }
+  };
+
+  // AI Note Summarizer Function
+  const generateSummary = async () => {
+    if (!content.trim()) {
+      toast.error("Please write some content first");
+      return;
+    }
+
+    setIsGeneratingSummary(true);
+    try {
+      const response = await api.post("/ai/summarize", {
+        content: content,
+      });
+      setAiSummary(response.data.summary);
+      setShowAiPanel(true);
+      toast.success("Summary generated!");
+    } catch (error) {
+      console.error("Error generating summary:", error);
+
+      // Handle specific error types
+      if (error.response?.status === 429) {
+        toast.error("AI service quota exceeded. Please try again later.");
+      } else if (error.response?.status === 503) {
+        toast.error(
+          "AI service is temporarily unavailable. Please try again later."
+        );
+      } else {
+        toast.error("Failed to generate summary. Please try again.");
+      }
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
+  // Apply writing suggestions
+  const applySuggestion = (improvedContent) => {
+    setContent(improvedContent);
+    toast.success("Writing improvement applied!");
+  };
 
   // Typewriter effect for PDF processing
   useEffect(() => {
@@ -211,7 +303,9 @@ const CreatePage = () => {
                   <form onSubmit={handleSubmit}>
                     <div className="form-control mb-4">
                       <label className="label">
-                        <span className="label-text">Title</span>
+                        <span className="label-text text-base font-semibold">
+                          Title
+                        </span>
                       </label>
                       <input
                         type="text"
@@ -224,15 +318,152 @@ const CreatePage = () => {
 
                     <div className="form-control mb-4">
                       <label className="label">
-                        <span className="label-text">Content</span>
+                        <span className="label-text text-base font-semibold">
+                          Content
+                        </span>
+                        {hasFormatting(content) && (
+                          <div className="label-text-alt">
+                            <button
+                              type="button"
+                              onClick={() => setShowPreview(!showPreview)}
+                              className="btn btn-xs btn-ghost"
+                            >
+                              {showPreview ? (
+                                <>
+                                  <Edit className="size-3 mr-1" />
+                                  Edit
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="size-3 mr-1" />
+                                  Preview
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
                       </label>
-                      <textarea
-                        placeholder="Write your note here..."
-                        className="textarea textarea-bordered min-h-80 resize-y"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                      />
+
+                      {showPreview && hasFormatting(content) ? (
+                        <div
+                          className="textarea textarea-bordered min-h-80 resize-y bg-base-100 prose prose-sm max-w-none p-4"
+                          dangerouslySetInnerHTML={{
+                            __html: formatText(content),
+                          }}
+                        />
+                      ) : (
+                        <textarea
+                          className="textarea textarea-bordered min-h-80 resize-y"
+                          placeholder="Write your note here... (Try: **bold**, # heading, ## subheading)"
+                          value={content}
+                          onChange={(e) => setContent(e.target.value)}
+                        />
+                      )}
+
+                      {/* AI Features Buttons */}
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={checkWriting}
+                          disabled={isCheckingWriting || !content.trim()}
+                          className="btn btn-sm btn-outline btn-primary"
+                        >
+                          {isCheckingWriting ? (
+                            <span className="loading loading-spinner loading-xs"></span>
+                          ) : (
+                            <Wand2 className="size-4" />
+                          )}
+                          {isCheckingWriting
+                            ? "Analyzing..."
+                            : "Writing Assistant"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={generateSummary}
+                          disabled={isGeneratingSummary || !content.trim()}
+                          className="btn btn-sm btn-outline btn-secondary"
+                        >
+                          {isGeneratingSummary ? (
+                            <span className="loading loading-spinner loading-xs"></span>
+                          ) : (
+                            <Sparkles className="size-4" />
+                          )}
+                          {isGeneratingSummary
+                            ? "Summarizing..."
+                            : "Generate Summary"}
+                        </button>
+                      </div>
                     </div>
+
+                    {/* AI Results Panel */}
+                    {showAiPanel && (writingAssistance || aiSummary) && (
+                      <div className="card bg-base-200 mb-4">
+                        <div className="card-body p-4">
+                          <div className="flex justify-between items-center mb-3">
+                            <h3 className="card-title text-lg">
+                              <Sparkles className="size-5 text-primary" />
+                              AI Assistant
+                            </h3>
+                            <button
+                              onClick={() => setShowAiPanel(false)}
+                              className="btn btn-ghost btn-xs"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          {/* Writing Assistant Results */}
+                          {writingAssistance && (
+                            <div className="mb-4">
+                              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                                <CheckCircle className="size-4 text-primary" />
+                                Writing Suggestions
+                              </h4>
+                              <div className="bg-base-100 p-3 rounded-lg">
+                                <p className="text-sm whitespace-pre-wrap">
+                                  {writingAssistance}
+                                </p>
+                                <button
+                                  onClick={() =>
+                                    applySuggestion(writingAssistance)
+                                  }
+                                  className="btn btn-xs btn-primary mt-2"
+                                >
+                                  Apply Suggestions
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Summary Results */}
+                          {aiSummary && (
+                            <div>
+                              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                                <FileCheck className="size-4 text-secondary" />
+                                AI Summary
+                              </h4>
+                              <div className="bg-base-100 p-3 rounded-lg">
+                                <p className="text-sm whitespace-pre-wrap">
+                                  {aiSummary}
+                                </p>
+                                <button
+                                  onClick={() => {
+                                    setContent(
+                                      content + "\n\n**Summary:**\n" + aiSummary
+                                    );
+                                    toast.success("Summary added to note!");
+                                  }}
+                                  className="btn btn-xs btn-secondary mt-2"
+                                >
+                                  Add to Note
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="card-actions justify-between items-center">
                       <button

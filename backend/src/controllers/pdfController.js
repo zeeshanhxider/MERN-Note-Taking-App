@@ -1,5 +1,5 @@
 import PDFParser from "pdf2json";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { CohereClient } from "cohere-ai";
 import Note from "../model/Note.js";
 import fs from "fs";
 import path from "path";
@@ -8,43 +8,47 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export async function processPdfAndCreateNote(req, res) {
+export const processPdfAndCreateNote = async (req, res) => {
   let tempFilePath = null;
 
   try {
-    // Debug: Check if API key is loaded (moved here after dotenv loads)
+    // Debug: Check if API key is loaded
     console.log(
-      "GEMINI_API_KEY loaded:",
-      process.env.GEMINI_API_KEY ? "Yes" : "No"
+      "COHERE_API_KEY loaded:",
+      process.env.COHERE_API_KEY ? "Yes" : "No"
     );
-    console.log("API Key length:", process.env.GEMINI_API_KEY?.length || 0);
+    console.log("API Key length:", process.env.COHERE_API_KEY?.length || 0);
 
     // Check if API key is available
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.COHERE_API_KEY) {
       return res.status(500).json({
         message:
-          "Gemini API key not configured. Please add GEMINI_API_KEY to your .env file.",
+          "Cohere API key not configured. Please add COHERE_API_KEY to your .env file.",
       });
     }
 
-    // Initialize Gemini AI client here (after env check)
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    // Initialize Cohere AI client
+    const cohere = new CohereClient({
+      token: process.env.COHERE_API_KEY,
+    });
 
     if (!req.file) {
       return res.status(400).json({ message: "No PDF file uploaded" });
     }
 
-    // Create a temporary file from the uploaded buffer
-    const tempDir = path.join(__dirname, "../../temp");
+    // Create temporary directory if it doesn't exist
+    const tempDir = path.join(__dirname, "../temp");
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
 
+    // Save uploaded file temporarily
     tempFilePath = path.join(tempDir, `temp_${Date.now()}.pdf`);
     fs.writeFileSync(tempFilePath, req.file.buffer);
 
     // Extract text from PDF using pdf2json
-    const extractedText = await new Promise((resolve, reject) => {
+    let extractedText = "";
+    await new Promise((resolve, reject) => {
       const pdfParser = new PDFParser();
 
       pdfParser.on("pdfParser_dataError", (errData) => {
@@ -53,175 +57,102 @@ export async function processPdfAndCreateNote(req, res) {
 
       pdfParser.on("pdfParser_dataReady", (pdfData) => {
         try {
-          // Extract text from all pages with improved formatting
-          let text = "";
+          let fullText = "";
           if (pdfData.Pages) {
             pdfData.Pages.forEach((page) => {
-              let pageText = "";
               if (page.Texts) {
-                // Sort texts by position for better reading order
-                const sortedTexts = page.Texts.sort((a, b) => {
-                  if (Math.abs(a.y - b.y) < 0.1) {
-                    return a.x - b.x; // Same line, sort by x position
-                  }
-                  return a.y - b.y; // Different lines, sort by y position
-                });
-
-                sortedTexts.forEach((textItem) => {
-                  if (textItem.R) {
-                    let lineText = "";
-                    textItem.R.forEach((textRun) => {
+                page.Texts.forEach((text) => {
+                  if (text.R) {
+                    text.R.forEach((textRun) => {
                       if (textRun.T) {
-                        // Decode the text
-                        let decodedText = decodeURIComponent(textRun.T);
-                        lineText += decodedText;
+                        // Decode URI components and add space
+                        fullText += decodeURIComponent(textRun.T) + " ";
                       }
                     });
-
-                    // Add the line text with a space
-                    if (lineText.trim()) {
-                      pageText += lineText + " ";
-                    }
                   }
                 });
               }
-
-              // Clean up page text and add page break
-              pageText = pageText
-                .replace(/\s+/g, " ") // Replace multiple spaces with single space
-                .trim();
-
-              if (pageText) {
-                text += pageText + "\n\n";
-              }
+              fullText += "\n"; // Add line break after each page
             });
           }
 
-          // Final cleanup of the extracted text
-          let cleanedText = text
+          // Clean up the text
+          extractedText = fullText
             .replace(/\s+/g, " ") // Replace multiple spaces with single space
-            .replace(/\n\s*\n\s*\n/g, "\n\n") // Replace multiple newlines with double newline
+            .replace(/\n\s*\n/g, "\n") // Replace multiple newlines with single newline
             .trim();
 
-          resolve(cleanedText);
-        } catch (error) {
-          reject(error);
+          resolve();
+        } catch (parseError) {
+          reject(parseError);
         }
       });
 
       pdfParser.loadPDF(tempFilePath);
     });
 
-    // Clean up temp file after extraction
+    // Clean up temp file
     if (tempFilePath && fs.existsSync(tempFilePath)) {
       fs.unlinkSync(tempFilePath);
       tempFilePath = null;
     }
 
-    if (!extractedText.trim()) {
+    if (!extractedText || extractedText.trim().length === 0) {
       return res.status(400).json({ message: "No text found in the PDF" });
     }
 
-    // Generate notes using Gemini AI with retry logic and multiple model fallback
-    let generatedContent = null;
+    // Generate AI notes using Cohere
     let title = "Notes from PDF";
     let content = extractedText;
+    let generatedContent = "";
 
     try {
-      // Try only valid models (removed invalid gemini-pro)
-      const models = [
-        "gemini-1.5-flash", // Free tier friendly, fast
-        "gemini-1.5-pro", // Better quality but higher quota usage
-      ];
+      console.log("Generating AI notes with Cohere...");
 
-      let modelUsed = null;
-      let quotaExceeded = false;
+      const prompt = `You are a note-taking assistant. You must analyze the provided PDF text and create structured notes following EXACTLY this format:
 
-      for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
-        const modelName = models[modelIndex];
+TITLE: [Write a specific, descriptive title based on the main topic/subject - NOT generic]
 
-        try {
-          console.log(`Trying model: ${modelName}`);
-          const model = genAI.getGenerativeModel({ model: modelName });
+CONTENT:
+[Your structured notes here using markdown formatting]
 
-          const prompt = `
-            Please analyze the following text extracted from a PDF and create well-structured notes. 
-            Be concise but comprehensive. Use clear headings and organize information logically.
-            Use simple formatting without asterisks or markdown symbols.
-            
-            Text:
-            ${extractedText}
-            
-            Format response as:
-            TITLE: [Short title]
-            
-            CONTENT:
-            [Structured notes using headings and numbered/lettered lists, but avoid using asterisks for formatting]
-          `;
+STRICT FORMATTING RULES:
+1. Start with exactly "TITLE: " followed by the title
+2. Then have a blank line
+3. Then start with exactly "CONTENT:" 
+4. Use # for main headings ONLY
+5. Use ## for subheadings ONLY
+6. NEVER use ### or #### - only # and ##
+7. Use **bold** for important terms
+8. Use *italic* for emphasis
+9. Use - for bullet points
 
-          // Retry logic with exponential backoff for current model
-          const maxRetries = 2; // Reduced retries since we have model fallback
-          let retryDelay = 1000;
+EXAMPLE OUTPUT:
+TITLE: Machine Learning Fundamentals and Neural Networks
 
-          for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-              console.log(
-                `Model ${modelName}: Attempt ${attempt}/${maxRetries}`
-              );
-              const result = await model.generateContent(prompt);
-              const response = await result.response;
-              generatedContent = response.text();
-              modelUsed = modelName;
-              console.log(`Success with model: ${modelName}`);
-              break; // Success, exit retry loop
-            } catch (modelError) {
-              console.log(
-                `Model ${modelName} attempt ${attempt} failed:`,
-                modelError.message
-              );
+CONTENT:
+# Introduction to Machine Learning
+- **Machine Learning** is a subset of artificial intelligence
+- Focuses on *algorithms* that improve through experience
 
-              if (attempt === maxRetries) {
-                throw modelError; // Re-throw on final attempt for this model
-              }
+## Types of Learning
+- **Supervised Learning**: Uses labeled data
+- **Unsupervised Learning**: Finds patterns in unlabeled data
 
-              if (modelError.status === 503 || modelError.status === 429) {
-                console.log(
-                  `Retrying ${modelName} in ${retryDelay}ms... (${
-                    modelError.status === 429
-                      ? "Quota limit"
-                      : "Service overloaded"
-                  })`
-                );
-                await new Promise((resolve) => setTimeout(resolve, retryDelay));
-                retryDelay *= 2;
-              } else {
-                throw modelError; // Don't retry for non-503/429 errors
-              }
-            }
-          }
+Now analyze this PDF text and follow the EXACT format above:
 
-          // If we got content, break out of model loop
-          if (generatedContent) {
-            break;
-          }
-        } catch (modelError) {
-          console.log(
-            `Model ${modelName} failed completely:`,
-            modelError.message
-          );
+${extractedText}
 
-          // Track if we hit quota limits
-          if (modelError.status === 429) {
-            quotaExceeded = true;
-          }
+Remember: Start with "TITLE: " and include "CONTENT:" exactly as shown. Use ONLY # and ## for headings, never ###.`;
 
-          // Continue to next model
-          if (modelIndex === models.length - 1) {
-            // Last model failed, throw error to be caught by outer catch
-            throw modelError;
-          }
-        }
-      }
+      const response = await cohere.chat({
+        model: "command-r-plus",
+        message: prompt,
+        temperature: 0.3,
+        maxTokens: 3000,
+      });
+
+      generatedContent = response.text;
 
       if (generatedContent) {
         // Parse the AI response to extract title and content
@@ -230,14 +161,14 @@ export async function processPdfAndCreateNote(req, res) {
 
         title = titleMatch
           ? titleMatch[1].trim()
-          : `AI-Generated Notes from PDF (${modelUsed})`;
+          : "AI-Generated Notes from PDF";
         content = contentMatch ? contentMatch[1].trim() : generatedContent;
       }
     } catch (aiError) {
       console.log("AI processing failed:", aiError.message);
 
       // Check the type of AI error and provide appropriate user feedback
-      if (aiError.status === 503) {
+      if (aiError.status === 503 || aiError.statusCode === 503) {
         return res.status(503).json({
           success: false,
           message:
@@ -246,29 +177,27 @@ export async function processPdfAndCreateNote(req, res) {
         });
       }
 
-      if (aiError.status === 429) {
+      if (aiError.status === 429 || aiError.statusCode === 429) {
         return res.status(429).json({
           success: false,
           message:
-            "AI service quota exceeded. Please try again later or consider upgrading your plan.",
+            "AI service quota exceeded. Please try again later or use manual note creation.",
           error: "quota_exceeded",
         });
       }
 
-      // For other AI errors
-      return res.status(500).json({
-        success: false,
-        message: "AI service is currently unavailable. Please try again later.",
-        error: "ai_service_error",
-      });
+      // For other AI errors, fall back to raw text
+      console.log("Falling back to raw extracted text");
+      title = "Notes from PDF (AI processing failed)";
+      content = extractedText;
     }
 
-    // Only create and save the note if AI processing was successful
-    if (!generatedContent) {
+    // Only create and save the note if we have content
+    if (!content || content.trim().length === 0) {
       return res.status(500).json({
         success: false,
-        message: "Failed to generate AI notes. Please try again later.",
-        error: "ai_processing_failed",
+        message: "Failed to process PDF content. Please try again later.",
+        error: "processing_failed",
       });
     }
 
@@ -279,6 +208,7 @@ export async function processPdfAndCreateNote(req, res) {
       user: req.user.userId,
       source: "pdf_upload",
       folder: req.body.folder || null,
+      isPdfGenerated: true, // Mark as AI-generated
     });
 
     const savedNote = await note.save();
@@ -299,14 +229,9 @@ export async function processPdfAndCreateNote(req, res) {
     }
 
     console.error("Error processing PDF:", error);
-    if (error.message.includes("API key")) {
-      return res.status(500).json({
-        message: "AI service configuration error. Please check API key.",
-      });
-    }
     res.status(500).json({
-      message: "Failed to process PDF and generate notes",
+      message: "Error processing PDF file",
       error: error.message,
     });
   }
-}
+};

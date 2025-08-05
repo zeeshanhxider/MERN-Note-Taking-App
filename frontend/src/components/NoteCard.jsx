@@ -79,9 +79,6 @@ const NoteCard = ({ note, setNotes }) => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {note.updatedAt !== note.createdAt && (
-                  <span className="badge badge-sm badge-ghost">Updated</span>
-                )}
                 {note.isPdfGenerated && (
                   <span className="badge badge-sm badge-primary badge-outline">
                     AI Generated
