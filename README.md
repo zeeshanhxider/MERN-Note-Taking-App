@@ -62,7 +62,7 @@ COHERE_API_KEY=your-cohere-api-key-here
 
 # Server Configuration
 PORT=5001
-NODE_ENV=development
+NODE_ENV=production
 
 # Upstash Redis Configuration (for rate limiting)
 UPSTASH_REDIS_REST_URL=your-upstash-redis-url
@@ -160,7 +160,6 @@ mern-note-taking-app/
 │   │   ├── routes/         # API routes
 │   │   └── server.js       # Express server setup
 │   ├── package.json
-│   └── .env.example
 ├── frontend/
 │   ├── src/
 │   │   ├── components/     # Reusable React components
