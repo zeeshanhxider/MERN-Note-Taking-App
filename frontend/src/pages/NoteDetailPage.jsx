@@ -2,13 +2,21 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import toast from "react-hot-toast";
-import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  Trash2Icon,
+  EditIcon,
+  SaveIcon,
+  XIcon,
+} from "lucide-react";
 import api from "../lib/axios";
 
 const NoteDetailPage = () => {
   const [note, setNote] = useState(null);
+  const [originalNote, setOriginalNote] = useState(null); 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const navigate = useNavigate();
 
@@ -19,6 +27,7 @@ const NoteDetailPage = () => {
       try {
         const res = await api.get(`/notes/${id}`);
         setNote(res.data);
+        setOriginalNote(res.data);
       } catch (error) {
         console.log("Error in fetching note", error);
         toast.error("Failed to fetch the note");
@@ -54,13 +63,23 @@ const NoteDetailPage = () => {
     try {
       await api.put(`/notes/${id}`, note);
       toast.success("Note updated successfully");
-      navigate("/");
+      setOriginalNote(note);
+      setIsEditMode(false);
     } catch (error) {
       console.log("Error saving the note:", error);
       toast.error("Failed to update note");
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEdit = () => {
+    setIsEditMode(true);
+  };
+
+  const handleCancel = () => {
+    setNote(originalNote);
+    setIsEditMode(false);
   };
 
   if (loading) {
@@ -103,51 +122,84 @@ const NoteDetailPage = () => {
 
           <div className="card bg-base-100">
             <div className="card-body">
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text">Title</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Note title"
-                  className="input input-bordered"
-                  value={note.title}
-                  onChange={(e) => setNote({ ...note, title: e.target.value })}
-                />
-              </div>
+              {!isEditMode ? (
+                // Preview Mode
+                <>
+                  <div className="mb-6">
+                    <h1 className="text-3xl font-bold text-base-content mb-4">
+                      {note.title}
+                    </h1>
+                    <div className="prose max-w-none">
+                      <div className="whitespace-pre-wrap text-base-content leading-relaxed">
+                        {note.content}
+                      </div>
+                    </div>
+                  </div>
 
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text">Content</span>
-                </label>
-                <textarea
-                  placeholder="Write your note here..."
-                  className="textarea textarea-bordered h-32"
-                  value={note.content}
-                  onChange={(e) =>
-                    setNote({ ...note, content: e.target.value })
-                  }
-                />
-              </div>
+                  <div className="flex justify-between items-center mt-6 pt-4 ">
+                    <button
+                      onClick={handleDelete}
+                      className="btn btn-error btn-outline"
+                    >
+                      <Trash2Icon className="h-5 w-5" />
+                    </button>
 
-              <div className="flex justify-between items-center mt-4">
-                {/* Moved delete button to bottom left */}
-                <button
-                  onClick={handleDelete}
-                  className="btn btn-error btn-outline"
-                >
-                  <Trash2Icon className="h-5 w-5" />
-                  Delete Note
-                </button>
+                    <button onClick={handleEdit} className="btn btn-primary">
+                      <EditIcon className="h-5 w-5" />
+                      Edit Note
+                    </button>
+                  </div>
+                </>
+              ) : (
+                // Edit Mode
+                <>
+                  <div className="form-control mb-4">
+                    <label className="label">
+                      <span className="label-text">Title</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Note title"
+                      className="input input-bordered"
+                      value={note.title}
+                      onChange={(e) =>
+                        setNote({ ...note, title: e.target.value })
+                      }
+                    />
+                  </div>
 
-                <button
-                  className="btn btn-primary"
-                  disabled={saving}
-                  onClick={handleSave}
-                >
-                  {saving ? "Saving..." : "Save Changes"}
-                </button>
-              </div>
+                  <div className="form-control mb-4">
+                    <label className="label">
+                      <span className="label-text">Content</span>
+                    </label>
+                    <textarea
+                      placeholder="Write your note here..."
+                      className="textarea textarea-bordered h-32"
+                      value={note.content}
+                      onChange={(e) =>
+                        setNote({ ...note, content: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex justify-end items-center mt-4">
+                    <div className="flex gap-3">
+                      <button onClick={handleCancel} className="btn btn-outline btn-default">
+                        <XIcon className="h-5 w-5" />
+                        Cancel
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        disabled={saving}
+                        onClick={handleSave}
+                      >
+                        <SaveIcon className="h-5 w-5" />
+                        {saving ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

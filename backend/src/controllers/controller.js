@@ -2,9 +2,21 @@ import Note from "../model/Note.js";
 
 export async function getAllNotes(req, res) {
   try {
-    const notes = await Note.find({ user: req.user.userId }).sort({
-      createdAt: -1,
-    }); // -1 will sort in desc. order (newest first)
+    const { folder } = req.query;
+
+    const query = { user: req.user.userId };
+
+    // Filter by folder if specified
+    if (folder === "null" || folder === "" || !folder) {
+      query.folder = null; // Root folder
+    } else {
+      query.folder = folder;
+    }
+
+    const notes = await Note.find(query)
+      .sort({ createdAt: -1 })
+      .populate("folder", "name color");
+
     res.status(200).json(notes);
   } catch (error) {
     console.error("Error in getAllNotes controller", error);
@@ -28,10 +40,22 @@ export async function fetchNote(req, res) {
 
 export async function createNote(req, res) {
   try {
-    const { title, content } = req.body;
-    const note = new Note({ title, content, user: req.user.userId });
+    const { title, content, folder } = req.body;
+    console.log("Backend createNote - received folder:", folder); // Debug log
+
+    const note = new Note({
+      title,
+      content,
+      user: req.user.userId,
+      folder: folder || null,
+    });
 
     const savedNote = await note.save();
+    await savedNote.populate("folder", "name color");
+    console.log(
+      "Backend createNote - saved note with folder:",
+      savedNote.folder
+    ); // Debug log
     res.status(201).json(savedNote);
   } catch (error) {
     console.error("Error in createNote controller", error);

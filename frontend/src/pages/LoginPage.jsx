@@ -15,6 +15,13 @@ const LoginPage = () => {
     try {
       const res = await api.post("/auth/login", { username, password });
       localStorage.setItem("token", res.data.token);
+
+      // Store user information for the navbar
+      if (res.data.user) {
+        localStorage.setItem("userName", res.data.user.username);
+        localStorage.setItem("userId", res.data.user._id);
+      }
+
       toast.success("Logged in!");
       navigate("/");
     } catch (error) {
