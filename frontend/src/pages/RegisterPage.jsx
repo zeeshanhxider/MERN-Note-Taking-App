@@ -24,11 +24,23 @@ const RegisterPage = () => {
     }
   };
 
+  const handleUsernameKeyDown = (e) => {
+    if (e.key === " ") {
+      e.preventDefault();
+      setUsername((prev) => prev + "_");
+    }
+  };
+
+  const handleUsernameChange = (e) => {
+    const clean = e.target.value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase();
+    setUsername(clean);
+  };
+
   return (
     <div className="min-h-screen bg-base-200">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto">
-            <h1 className="text-3xl font-bold text-primary font-mono text-center py-8 mb-6">
+          <h1 className="text-3xl font-bold text-primary font-mono text-center py-8 mb-6">
             <span className="inline-block overflow-hidden whitespace-nowrap border-r-2 border-primary animate-typewriterBlink">
               Welcome to Scribbly
             </span>
@@ -47,7 +59,8 @@ const RegisterPage = () => {
                     placeholder="Choose a username"
                     className="input input-bordered"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={handleUsernameChange}
+                    onKeyDown={handleUsernameKeyDown}
                     disabled={loading}
                   />
                 </div>

@@ -24,6 +24,18 @@ const LoginPage = () => {
     }
   };
 
+  const handleUsernameKeyDown = (e) => {
+    if (e.key === " ") {
+      e.preventDefault();
+      setUsername((prev) => prev + "_");
+    }
+  };
+
+  const handleUsernameChange = (e) => {
+    const clean = e.target.value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase();
+    setUsername(clean);
+  };
+
   return (
     <div className="min-h-screen bg-base-200">
       <div className="container mx-auto px-4 py-8">
@@ -48,7 +60,8 @@ const LoginPage = () => {
                     placeholder="Enter your username"
                     className="input input-bordered"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={handleUsernameChange}
+                    onKeyDown={handleUsernameKeyDown}
                     disabled={loading}
                   />
                 </div>
