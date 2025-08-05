@@ -1,8 +1,8 @@
-# MERN Note Taking Web App
+# 📝 MERN Note Taking Web App
 
 A full-stack note-taking application built with MongoDB, Express.js, React, and Node.js, featuring AI-powered assistance using Cohere API.
 
-## Features
+## ✨ Features
 
 ### Core Functionality
 
@@ -24,7 +24,7 @@ A full-stack note-taking application built with MongoDB, Express.js, React, and 
 - **Rich Text Preview** - Toggle between edit and preview modes
 - **Formatting Shortcuts** - Bold, italic, headers, lists, and more
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 ### Backend
 
@@ -46,7 +46,7 @@ A full-stack note-taking application built with MongoDB, Express.js, React, and 
 - **DaisyUI** - Component library for Tailwind
 - **Lucide React** - Icon library
 
-## Environment Variables
+## ⚙️ Environment Variables
 
 Create a `.env` file in the backend directory with the following variables:
 
@@ -69,7 +69,7 @@ UPSTASH_REDIS_REST_URL=your-upstash-redis-url
 UPSTASH_REDIS_REST_TOKEN=your-upstash-redis-token
 ```
 
-## Getting Started
+## 🧩 Getting Started
 
 ### Prerequisites
 
@@ -122,7 +122,7 @@ UPSTASH_REDIS_REST_TOKEN=your-upstash-redis-token
    npm run dev
    ```
 
-## API Endpoints
+## 📡 API Endpoints
 
 ### Authentication
 
@@ -147,7 +147,7 @@ UPSTASH_REDIS_REST_TOKEN=your-upstash-redis-token
 
 - `POST /pdf/process` - Upload and process PDF file
 
-## Project Structure
+## 🗂️ Project Structure
 
 ```
 mern-note-taking-app/
@@ -172,25 +172,5 @@ mern-note-taking-app/
 └── README.md
 ```
 
-## Recent Updates
 
-### Migration to Cohere AI
-
-The application has been migrated from Google Gemini API to Cohere AI for better reliability and performance:
-
-- **Enhanced AI Features** - Improved writing assistance and summarization
-- **Better Error Handling** - More robust error management and fallbacks
-- **Structured Formatting** - AI now generates well-formatted markdown content
-- **Consistent API** - Unified error handling across all AI endpoints
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License.
+## Made with 🧡 by zeeshan
