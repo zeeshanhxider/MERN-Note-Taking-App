@@ -13,10 +13,29 @@ export const formatText = (text) => {
   // Convert __text__ to underline
   formatted = formatted.replace(/__(.*?)__/g, "<u>$1</u>");
 
-  // Convert `code` to inline code
+  // Convert code blocks FIRST (before inline code to avoid conflicts)
+  // Handle both proper ```lang and malformed `lang blocks
   formatted = formatted.replace(
-    /`(.*?)`/g,
+    /```(\w+)?\s*([\s\S]*?)```/g,
+    '<pre class="bg-base-300 p-4 rounded-lg mt-2 mb-2 overflow-x-auto"><code class="text-sm font-mono">$2</code></pre>'
+  );
+
+  // Handle malformed single-backtick code blocks (common AI mistake)
+  formatted = formatted.replace(
+    /`(\w+)\s*([\s\S]*?)`/g,
+    '<pre class="bg-base-300 p-4 rounded-lg mt-2 mb-2 overflow-x-auto"><code class="text-sm font-mono">$2</code></pre>'
+  );
+
+  // Convert `code` to inline code (after code blocks) - only single words/short phrases
+  formatted = formatted.replace(
+    /`([^`\n]+)`/g,
     '<code class="bg-base-300 px-1 py-0.5 rounded text-sm font-mono">$1</code>'
+  );
+
+  // Convert ### to h3
+  formatted = formatted.replace(
+    /^### (.*$)/gm,
+    '<h3 class="text-lg font-bold mt-3 mb-2">$1</h3>'
   );
 
   // Convert ## to h2
@@ -55,8 +74,10 @@ export const hasFormatting = (text) => {
     /\*\*(.*?)\*\*/, // bold
     /\*(.*?)\*/, // italic
     /__(.*?)__/, // underline
-    /`(.*?)`/, // code
-    /^#{1,2} /m, // headers
+    /`([^`\n]+)`/, // inline code
+    /```[\s\S]*?```/, // proper code blocks
+    /`\w+\s*[\s\S]*?`/, // malformed code blocks
+    /^#{1,3} /m, // headers (including ###)
     /^[\-\*] /m, // lists
   ];
 

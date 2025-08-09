@@ -14,8 +14,23 @@ const RegisterPage = () => {
     setLoading(true);
     try {
       const res = await api.post("/auth/register", { username, password });
-      toast.success("Registered successfully!");
-      navigate("/login");
+
+      // Store the token in localStorage for automatic login
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+
+        // Store user information for consistency with login
+        if (res.data.user) {
+          localStorage.setItem("userName", res.data.user.username);
+          localStorage.setItem("userId", res.data.user._id);
+        }
+
+        toast.success("Registered and logged in successfully!");
+        navigate("/"); // Navigate directly to the main page
+      } else {
+        toast.success("Registered successfully!");
+        navigate("/login");
+      }
     } catch (error) {
       const message = error.response?.data?.message || "Registration failed";
       toast.error(message);

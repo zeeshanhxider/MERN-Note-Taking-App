@@ -12,7 +12,6 @@ import {
   FileCheck,
   Wand2,
   CheckCircle,
-  AlertCircle,
   ChevronDown,
   ChevronUp,
   Eye,
@@ -328,23 +327,35 @@ const NoteDetailPage = () => {
                     {/* AI Features */}
                     <div className="flex gap-2 mt-2">
                       <button
-                        type="button"
-                        onClick={checkWriting}
-                        disabled={isCheckingWriting}
-                        className="btn btn-sm btn-outline btn-primary"
-                      >
-                        <Wand2 className="h-4 w-4" />
-                        {isCheckingWriting ? "Checking..." : "Improve Writing"}
-                      </button>
+                          type="button"
+                          onClick={checkWriting}
+                          disabled={isCheckingWriting || !content.trim()}
+                          className="btn btn-sm btn-outline btn-primary"
+                        >
+                          {isCheckingWriting ? (
+                            <span className="loading loading-spinner loading-xs"></span>
+                          ) : (
+                            <Wand2 className="size-4" />
+                          )}
+                          {isCheckingWriting
+                            ? "Analyzing..."
+                            : "Writing Assistant"}
+                        </button>
                       <button
-                        type="button"
-                        onClick={generateSummary}
-                        disabled={isGeneratingSummary}
-                        className="btn btn-sm btn-outline btn-secondary"
-                      >
-                        <Sparkles className="h-4 w-4" />
-                        {isGeneratingSummary ? "Summarizing..." : "Summarize"}
-                      </button>
+                          type="button"
+                          onClick={generateSummary}
+                          disabled={isGeneratingSummary || !content.trim()}
+                          className="btn btn-sm btn-outline btn-secondary"
+                        >
+                          {isGeneratingSummary ? (
+                            <span className="loading loading-spinner loading-xs"></span>
+                          ) : (
+                            <Sparkles className="size-4" />
+                          )}
+                          {isGeneratingSummary
+                            ? "Summarizing..."
+                            : "Generate Summary"}
+                        </button>
                     </div>
                   </div>
 
@@ -383,7 +394,7 @@ const NoteDetailPage = () => {
                                     onClick={applySuggestion}
                                     className="btn btn-xs btn-primary"
                                   >
-                                    Apply Changes
+                                    Apply Suggestions
                                   </button>
                                 </div>
                                 <div className="bg-base-100 rounded p-2 text-sm">

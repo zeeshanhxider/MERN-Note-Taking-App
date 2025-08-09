@@ -9,8 +9,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const processPdfAndCreateNote = async (req, res) => {
-  let tempFilePath = null;
-
   try {
     // Debug: Check if API key is loaded
     console.log(
@@ -36,18 +34,12 @@ export const processPdfAndCreateNote = async (req, res) => {
       return res.status(400).json({ message: "No PDF file uploaded" });
     }
 
-    // Create temporary directory if it doesn't exist
-    const tempDir = path.join(__dirname, "../temp");
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    // Save uploaded file temporarily
-    tempFilePath = path.join(tempDir, `temp_${Date.now()}.pdf`);
-    fs.writeFileSync(tempFilePath, req.file.buffer);
+    const filePath = req.file.path;
+    const fileName = req.file.originalname;
 
     // Extract text from PDF using pdf2json
     let extractedText = "";
+
     await new Promise((resolve, reject) => {
       const pdfParser = new PDFParser();
 
@@ -88,13 +80,12 @@ export const processPdfAndCreateNote = async (req, res) => {
         }
       });
 
-      pdfParser.loadPDF(tempFilePath);
+      pdfParser.loadPDF(filePath);
     });
 
-    // Clean up temp file
-    if (tempFilePath && fs.existsSync(tempFilePath)) {
-      fs.unlinkSync(tempFilePath);
-      tempFilePath = null;
+    // Clean up uploaded file
+    if (filePath && fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
@@ -109,47 +100,134 @@ export const processPdfAndCreateNote = async (req, res) => {
     try {
       console.log("Generating AI notes with Cohere...");
 
-      const prompt = `You are a note-taking assistant. You must analyze the provided PDF text and create structured notes following EXACTLY this format:
+      const prompt = `You are an expert academic note-taking assistant. Your task is to transform this PDF document into clear, comprehensive, and easy-to-understand study notes.
 
-TITLE: [Write a specific, descriptive title based on the main topic/subject - NOT generic]
-
-CONTENT:
-[Your structured notes here using markdown formatting]
-
-STRICT FORMATTING RULES:
-1. Start with exactly "TITLE: " followed by the title
-2. Then have a blank line
-3. Then start with exactly "CONTENT:" 
-4. Use # for main headings ONLY
-5. Use ## for subheadings ONLY
-6. NEVER use ### or #### - only # and ##
-7. Use **bold** for important terms
-8. Use *italic* for emphasis
-9. Use - for bullet points
-
-EXAMPLE OUTPUT:
-TITLE: Machine Learning Fundamentals and Neural Networks
-
-CONTENT:
-# Introduction to Machine Learning
-- **Machine Learning** is a subset of artificial intelligence
-- Focuses on *algorithms* that improve through experience
-
-## Types of Learning
-- **Supervised Learning**: Uses labeled data
-- **Unsupervised Learning**: Finds patterns in unlabeled data
-
-Now analyze this PDF text and follow the EXACT format above:
-
+PDF CONTENT:
 ${extractedText}
 
-Remember: Start with "TITLE: " and include "CONTENT:" exactly as shown. Use ONLY # and ## for headings, never ###.`;
+INSTRUCTIONS:
+Create well-structured notes that are:
+- Clear and easy to read
+- Comprehensive (don't miss any important points)
+- Logically organized
+- Perfect for studying and reference
+- Self-explanatory with proper context
+
+OUTPUT FORMAT:
+Start with: TITLE: Notes: ${fileName.replace(/\.pdf$/i, "")}
+
+Then: CONTENT:
+[Your organized notes here]
+
+FORMATTING GUIDELINES:
+1. Use # for main topics/chapters
+2. Use ## for subtopics/sections  
+3. Use ### for sub-subtopics/detailed sections
+4. Use **bold** for key terms, definitions, and important concepts
+5. Use *italic* for emphasis and examples
+6. Use - for bullet points and lists
+7. Use numbered lists (1., 2., 3.) for procedures or sequential steps
+8. For code snippets, use proper markdown code blocks with language specification:
+   \`\`\`cpp
+   // Your C++ code here
+   \`\`\`
+   \`\`\`javascript
+   // Your JavaScript code here
+   \`\`\`
+   \`\`\`python
+   # Your Python code here
+   \`\`\`
+9. Include all formulas, equations, or code snippets exactly as shown
+10. Summarize complex concepts in simple terms
+11. Add context where needed to make isolated points understandable
+12. NEVER use #### or deeper heading levels - stick to #, ##, and ### only
+
+CONTENT ORGANIZATION:
+- Start with an overview if the document has one
+- Group related concepts together
+- Maintain logical flow from basic to advanced concepts
+- Include examples and practical applications
+- End with key takeaways or summary if applicable
+
+EXPLANATION REQUIREMENTS - ABSOLUTELY CRITICAL:
+- STOP! Before writing ANY technical term, ask: "What IS this fundamentally?"
+- EVERY technical term MUST be treated as if the reader has NEVER heard it before
+- MANDATORY: Start with "**[Term]**: A [type of concept] that [fundamental definition]"
+- Examples of proper starts:
+  * "**Machine Learning**: A subset of artificial intelligence that..."
+  * "**Neural Network**: A computing system that..."
+  * "**Algorithm**: A step-by-step procedure that..."
+  * "**Database**: A structured collection that..."
+- NEVER start with "You can..." or "This involves..." - those are HOW descriptions, not WHAT definitions
+- Use this EXACT format: **[Term]**: A [fundamental concept type] that [basic definition]. [How it works]. [Why it's useful]. [When to use it].
+- NEVER assume the reader knows what any technical term means
+- If document mentions technical terms without definition, add a short explanation in your own words
+- When presenting code examples or syntax, explain what the code does and why it's useful
+- For concepts that build on previous knowledge, briefly remind what the prerequisite concepts are
+- Add context for why certain techniques or approaches are important or when they should be used
+
+DEFINITION ENFORCEMENT - NO EXCEPTIONS:
+Every technical term gets this treatment:
+1. **[Term]**: A [concept type] that [what it fundamentally is]
+2. [How it works mechanically]  
+3. [Why it's useful/important]
+4. [When/where to use it]
+5. [Code example with explanation if applicable]
+
+CRITICAL EXAMPLES:
+WRONG: "Machine Learning: You can use machine learning to..."
+RIGHT: "**Machine Learning**: A subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed for every scenario..."
+
+WRONG: "Data Preprocessing: You can clean and prepare data..."
+RIGHT: "**Data Preprocessing**: A data preparation technique that involves cleaning, transforming, and organizing raw data into a format suitable for analysis..."
+
+QUALITY STANDARDS:
+- Every important point from the document must be included
+- Make technical content accessible without losing accuracy
+- Use clear, concise language
+- Ensure notes are self-contained and make sense independently
+- Format for optimal readability and study efficiency
+- A reader should understand each concept even if they haven't seen the original document
+
+EXAMPLE APPROACH - FOLLOW THIS EXACTLY:
+ABSOLUTELY WRONG: "Neural Networks: You can use neural networks to process data..."
+
+ABSOLUTELY RIGHT: "**Neural Networks**: A computing system inspired by biological neural networks that consists of interconnected nodes (neurons) that process information. These networks learn patterns from data by adjusting connections between nodes based on training examples. This is useful for recognizing complex patterns, making predictions, and solving problems that traditional programming approaches struggle with. They're commonly used in image recognition, natural language processing, and predictive analytics.
+
+\`\`\`python
+# Simple neural network example
+import tensorflow as tf
+model = tf.keras.Sequential([
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(10, activation='softmax')
+])
+\`\`\`
+
+This example creates a basic neural network with two layers that can classify data into 10 categories."
+
+KEY DIFFERENCE:
+- WRONG starts with "You can..." (describes HOW to do something)
+- RIGHT starts with "A computing system that..." (defines WHAT it fundamentally is)
+- Always define the concept BEFORE explaining how to use it
+
+IMPORTANT CODE FORMATTING RULES:
+- ALWAYS use three backticks with language for code blocks
+- NEVER use single backticks for multi-line code
+- ALWAYS close code blocks with three backticks
+- Put code blocks on separate lines with proper spacing
+
+REMEMBER: Ask yourself "What IS this?" not "How do you do this?" when starting any technical explanation.
+
+FINAL REMINDER - ABSOLUTELY CRITICAL:
+Before writing any technical term, ask yourself: "If someone has never heard this term before, would they understand what it fundamentally IS from my first sentence?" If not, rewrite with a proper fundamental definition first.
+
+Remember: Start with "TITLE: " then "CONTENT:" exactly as shown. Make these the best study notes possible with PROPER DEFINITIONS for every technical term!`;
 
       const response = await cohere.chat({
         model: "command-r-plus",
         message: prompt,
-        temperature: 0.3,
-        maxTokens: 3000,
+        temperature: 0.2, // Lower temperature for more consistent, focused output
+        maxTokens: 4000, // Increased for more comprehensive notes
       });
 
       generatedContent = response.text;
@@ -219,12 +297,12 @@ Remember: Start with "TITLE: " and include "CONTENT:" exactly as shown. Use ONLY
       extractedText: extractedText.substring(0, 500) + "...", // Preview of extracted text
     });
   } catch (error) {
-    // Clean up temp file if it exists
-    if (tempFilePath && fs.existsSync(tempFilePath)) {
+    // Clean up uploaded file if it exists
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
       try {
-        fs.unlinkSync(tempFilePath);
+        fs.unlinkSync(req.file.path);
       } catch (cleanupError) {
-        console.error("Error cleaning up temp file:", cleanupError);
+        console.error("Error cleaning up uploaded file:", cleanupError);
       }
     }
 

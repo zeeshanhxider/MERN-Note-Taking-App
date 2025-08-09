@@ -24,7 +24,7 @@ const noteSchema = new mongoose.Schema(
     },
     source: {
       type: String,
-      enum: ["manual", "pdf_upload"],
+      enum: ["manual", "pdf_upload", "ppt_upload"],
       default: "manual",
     },
   },

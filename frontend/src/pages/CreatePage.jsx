@@ -9,6 +9,8 @@ import {
   AlertCircle,
   Eye,
   Edit,
+  File,
+  Presentation,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
@@ -28,6 +30,7 @@ const CreatePage = () => {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [typewriterText, setTypewriterText] = useState("");
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [pptLoading, setPptLoading] = useState(false);
 
   // AI Features state
   const [aiSummary, setAiSummary] = useState("");
@@ -44,6 +47,14 @@ const CreatePage = () => {
     "AI is reading through your content...",
     "Generating intelligent notes...",
     "Organizing insights...",
+    "Almost done! Finalizing notes...",
+  ];
+
+  const pptProcessingMessages = [
+    "Extracting text from PowerPoint...",
+    "AI is reading through your slides...",
+    "Generating structured notes...",
+    "Organizing key points...",
     "Almost done! Finalizing notes...",
   ];
 
@@ -118,16 +129,20 @@ const CreatePage = () => {
   // Apply writing suggestions
   const applySuggestion = (improvedContent) => {
     setContent(improvedContent);
-    toast.success("Writing improvement applied!");
+    setShowAiPanel(false); // Close the AI panel
+    toast.success(
+      "Writing suggestions applied!"
+    );
   };
 
-  // Typewriter effect for PDF processing
+  // Typewriter effect for processing
   useEffect(() => {
     let interval;
     let charIndex = 0;
 
-    if (pdfLoading) {
-      const currentMessage = processingMessages[currentMessageIndex];
+    if (pdfLoading || pptLoading) {
+      const messages = pptLoading ? pptProcessingMessages : processingMessages;
+      const currentMessage = messages[currentMessageIndex];
 
       interval = setInterval(() => {
         if (charIndex <= currentMessage.length) {
@@ -137,7 +152,7 @@ const CreatePage = () => {
           // Move to next message after a pause
           setTimeout(() => {
             setCurrentMessageIndex((prev) =>
-              prev === processingMessages.length - 1 ? 0 : prev + 1
+              prev === messages.length - 1 ? 0 : prev + 1
             );
             charIndex = 0;
             setTypewriterText("");
@@ -152,7 +167,7 @@ const CreatePage = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [pdfLoading, currentMessageIndex]);
+  }, [pdfLoading, pptLoading, currentMessageIndex]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -195,11 +210,41 @@ const CreatePage = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === "application/pdf") {
-      setSelectedFile(file);
-    } else {
-      toast.error("Please select a valid PDF file");
-      e.target.value = "";
+    const mode =
+      new URLSearchParams(window.location.search).get("mode") ||
+      document
+        .querySelector(".tab-active")
+        ?.textContent?.toLowerCase()
+        .includes("pdf")
+        ? "pdf"
+        : document
+            .querySelector(".tab-active")
+            ?.textContent?.toLowerCase()
+            .includes("ppt")
+        ? "ppt"
+        : "pdf";
+
+    if (mode === "pdf") {
+      if (file && file.type === "application/pdf") {
+        setSelectedFile(file);
+      } else {
+        toast.error("Please select a valid PDF file");
+        e.target.value = "";
+      }
+    } else if (mode === "ppt") {
+      if (
+        file &&
+        (file.type === "application/vnd.ms-powerpoint" ||
+          file.type ===
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+          file.name.toLowerCase().endsWith(".ppt") ||
+          file.name.toLowerCase().endsWith(".pptx"))
+      ) {
+        setSelectedFile(file);
+      } else {
+        toast.error("Please select a valid PowerPoint file (.ppt or .pptx)");
+        e.target.value = "";
+      }
     }
   };
 
@@ -281,6 +326,101 @@ const CreatePage = () => {
     }
   };
 
+  // PPT Upload Handler
+  const handlePptUpload = async (e) => {
+    e.preventDefault();
+
+    if (!selectedFile) {
+      toast.error("Please select a PowerPoint file");
+      return;
+    }
+
+    setPptLoading(true);
+    const formData = new FormData();
+    formData.append("ppt", selectedFile);
+    if (currentFolder) {
+      formData.append("folder", currentFolder);
+    }
+
+    try {
+      const response = await api.post("/notes/ppt-upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // AI processing was successful
+      toast.success("AI-generated notes created successfully!", {
+        icon: "🤖",
+      });
+
+      // Navigate back to the current folder
+      if (currentFolder) {
+        navigate(`/?folder=${currentFolder}`);
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      console.log("Error uploading PowerPoint", error);
+
+      // Handle specific error types from backend
+      const errorCode = error.response?.data?.error;
+      const errorMessage = error.response?.data?.message;
+
+      if (
+        errorCode === "service_unavailable" ||
+        error.response?.status === 503
+      ) {
+        toast.error(
+          "AI service is currently busy. Please try again in a few moments.",
+          {
+            duration: 6000,
+            icon: "🔄",
+          }
+        );
+      } else if (
+        errorCode === "quota_exceeded" ||
+        error.response?.status === 429
+      ) {
+        toast.error("AI service quota exceeded. Please try again later.", {
+          duration: 6000,
+          icon: "⏰",
+        });
+      } else if (
+        errorCode === "ai_service_error" ||
+        errorCode === "ai_processing_failed"
+      ) {
+        toast.error(
+          "AI service is currently unavailable. Please try again later.",
+          {
+            duration: 6000,
+            icon: "🔄",
+          }
+        );
+      } else if (errorCode === "text_extraction_failed") {
+        toast.error(
+          "Could not extract text from the PowerPoint file. Please ensure it contains text content.",
+          {
+            duration: 6000,
+            icon: "📝",
+          }
+        );
+      } else if (errorCode === "file_processing_failed") {
+        toast.error(
+          "Failed to process the PowerPoint file. Please ensure it's a valid PPT/PPTX file.",
+          {
+            duration: 6000,
+            icon: "📁",
+          }
+        );
+      } else {
+        toast.error(errorMessage || "Failed to process PowerPoint file");
+      }
+    } finally {
+      setPptLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-base-200">
       <div className="container mx-auto px-4 py-8">
@@ -296,6 +436,33 @@ const CreatePage = () => {
           <div className="card bg-base-100">
             <div className="card-body">
               <h2 className="card-title text-2xl mb-6">Create New Note</h2>
+
+              {/* Mode Switcher */}
+              <div className="tabs tabs-boxed mb-6">
+                <button
+                  className={`tab ${
+                    !mode || mode === "manual" ? "tab-active" : ""
+                  }`}
+                  onClick={() => setMode("manual")}
+                >
+                  <FileText className="size-4 mr-2" />
+                  Mannual
+                </button>
+                <button
+                  className={`tab ${mode === "pdf" ? "tab-active" : ""}`}
+                  onClick={() => setMode("pdf")}
+                >
+                  <File className="size-4 mr-2" />
+                  PDF
+                </button>
+                <button
+                  className={`tab ${mode === "ppt" ? "tab-active" : ""}`}
+                  onClick={() => setMode("ppt")}
+                >
+                  <Presentation className="size-4 mr-2" />
+                  PPT
+                </button>
+              </div>
 
               {!mode || mode === "manual" ? (
                 // Default Manual Form
@@ -425,6 +592,7 @@ const CreatePage = () => {
                                   {writingAssistance}
                                 </p>
                                 <button
+                                  type="button"
                                   onClick={() =>
                                     applySuggestion(writingAssistance)
                                   }
@@ -448,11 +616,15 @@ const CreatePage = () => {
                                   {aiSummary}
                                 </p>
                                 <button
+                                  type="button"
                                   onClick={() => {
                                     setContent(
                                       content + "\n\n**Summary:**\n" + aiSummary
                                     );
-                                    toast.success("Summary added to note!");
+                                    setShowAiPanel(false); // Close the AI panel
+                                    toast.success(
+                                      "Summary added to note! You can now edit and create the note when ready."
+                                    );
                                   }}
                                   className="btn btn-xs btn-secondary mt-2"
                                 >
@@ -465,16 +637,7 @@ const CreatePage = () => {
                       </div>
                     )}
 
-                    <div className="card-actions justify-between items-center">
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => setMode("pdf")}
-                      >
-                        <Upload className="size-4 mr-2" />
-                        Or upload PDF instead
-                      </button>
-
+                    <div className="card-actions justify-end">
                       <button
                         type="submit"
                         className="btn btn-primary"
@@ -485,16 +648,13 @@ const CreatePage = () => {
                     </div>
                   </form>
                 </>
-              ) : (
+              ) : mode === "pdf" ? (
                 // PDF Upload Mode
                 <>
                   <form onSubmit={handlePdfUpload}>
                     <div className="form-control mb-4">
                       <label className="label">
                         <span className="label-text">Select PDF File</span>
-                        <span className="label-text-alt text-base-content/60">
-                          AI will generate structured notes automatically
-                        </span>
                       </label>
                       <input
                         type="file"
@@ -511,24 +671,19 @@ const CreatePage = () => {
                       )}
                     </div>
 
-                    <div className="card-actions justify-between items-center">
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => setMode("manual")}
-                      >
-                        <FileText className="size-4 mr-2" />
-                        Write manually instead
-                      </button>
+                    <span className="label-text-alt text-base-content/60">
+                      AI will generate structured notes automatically
+                    </span>
 
+                    <div className="card-actions justify-end">
                       <button
                         type="submit"
                         className={`btn min-w-[280px] ${
                           pdfLoading
-                            ? "btn-primary"
+                            ? "btn-secondary"
                             : selectedFile
-                            ? "btn-primary"
-                            : "btn-primary opacity-60 cursor-not-allowed"
+                            ? "btn-secondary"
+                            : "btn-secondary opacity-60 cursor-not-allowed"
                         }`}
                         disabled={!selectedFile && !pdfLoading}
                         onClick={
@@ -555,7 +710,71 @@ const CreatePage = () => {
                     </div>
                   </form>
                 </>
-              )}
+              ) : mode === "ppt" ? (
+                // PPT Upload Mode
+                <>
+                  <form onSubmit={handlePptUpload}>
+                    <div className="form-control mb-4">
+                      <label className="label">
+                        <span className="label-text">
+                          Select PPT or PPTX File
+                        </span>
+                      </label>
+                      <input
+                        type="file"
+                        accept=".ppt,.pptx"
+                        className="file-input file-input-bordered w-full"
+                        onChange={handleFileChange}
+                      />
+                      {selectedFile && (
+                        <div className="label">
+                          <span className="label-text-alt text-success">
+                            Selected: {selectedFile.name}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <span className="label-text-alt text-base-content/60">
+                      AI will generate structured notes automatically
+                    </span>
+
+                    <div className="card-actions justify-end">
+                      <button
+                        type="submit"
+                        className={`btn min-w-[280px] ${
+                          pptLoading
+                            ? "btn-secondary"
+                            : selectedFile
+                            ? "btn-secondary"
+                            : "btn-secondary opacity-60 cursor-not-allowed"
+                        }`}
+                        disabled={!selectedFile && !pptLoading}
+                        onClick={
+                          !selectedFile && !pptLoading
+                            ? (e) => {
+                                e.preventDefault();
+                                toast.error("Please select a PPT file first");
+                              }
+                            : undefined
+                        }
+                      >
+                        {pptLoading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="loading loading-spinner loading-sm text-black"></div>
+                            <span className=" text-black font-mono">
+                              {typewriterText}
+                              <span className="animate-pulse">|</span>
+                            </span>
+                          </div>
+                        ) : (
+                          "Generate Notes from PPT"
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </>
+              ) : null}
             </div>
           </div>
         </div>

@@ -10,7 +10,9 @@ export async function registerUser(req, res) {
   let { username, password } = req.body;
 
   if (!username || !password) {
-    return res.status(400).json({ message: "Username and password are required." });
+    return res
+      .status(400)
+      .json({ message: "Username and password are required." });
   }
 
   try {
@@ -19,7 +21,15 @@ export async function registerUser(req, res) {
     const hashed = await bcrypt.hash(password, 10);
     const newUser = new User({ username, password: hashed });
     const savedUser = await newUser.save();
-    res.status(201).json({ message: "User registered successfully", user: savedUser });
+
+    // Generate JWT token for automatic login
+    const token = jwt.sign({ userId: savedUser._id }, process.env.JWT_SECRET);
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: savedUser,
+      token,
+    });
   } catch (error) {
     if (error.message === "Username cannot contain spaces.") {
       return res.status(400).json({ message: error.message });
@@ -27,7 +37,9 @@ export async function registerUser(req, res) {
     if (error.code === 11000) {
       return res.status(400).json({ message: "User already exists" });
     }
-    res.status(400).json({ message: "Registration failed", error: error.message });
+    res
+      .status(400)
+      .json({ message: "Registration failed", error: error.message });
   }
 }
 
