@@ -43,7 +43,7 @@ const FormattingHelp = ({ showFormatHelp }) => {
             <div className="sm:col-span-2 lg:col-span-1">
             </div>
           </div>
-          <div className="text-xs mt-5">
+          <div className="text-xs mt-5 font-semibold">
                 Use the Preview button to see formatted text
               </div>
         </div>

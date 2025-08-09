@@ -12,19 +12,19 @@ createRoot(document.getElementById("root")).render(
       <Toaster
         toastOptions={{
           style: {
-            background: "#1f2937", // Dark gray background
-            color: "#f9fafb", // Light text
+            background: "#1E1E1E", 
+            color: "#f9fafb", 
           },
           success: {
             style: {
-              background: "#065f46", // Dark green for success
-              color: "#ecfdf5", // Light green text
+              background: "#1E1E1E", 
+              color: "#f9fafb", 
             },
           },
           error: {
             style: {
-              background: "#7f1d1d", // Dark red for errors
-              color: "#fef2f2", // Light red text
+              background: "#1E1E1E", 
+              color: "#f9fafb", 
             },
           },
         }}

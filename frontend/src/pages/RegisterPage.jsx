@@ -54,7 +54,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen bg-base-300">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto">
           <h1 className="text-3xl font-bold text-primary font-mono text-center py-8 mb-6">

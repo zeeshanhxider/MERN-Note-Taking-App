@@ -47,18 +47,20 @@ const CreatePage = () => {
 
   const processingMessages = [
     "Extracting text from PDF...",
-    "AI is reading through your content...",
-    "Generating intelligent notes...",
-    "Organizing insights...",
-    "Almost done! Finalizing notes...",
+    "AI is reading your document...",
+    "Let the AI cook...",
+    "Generating structured notes...",
+    "AI is cooking...",
+    "Almost there...",
   ];
 
   const pptProcessingMessages = [
-    "Extracting text from PowerPoint...",
-    "AI is reading through your slides...",
+    "Extracting text from PPT...",
+    "AI is reading your slides...",
+    "Let the AI cook...",
     "Generating structured notes...",
-    "Organizing key points...",
-    "Almost done! Finalizing notes...",
+    "AI is cooking...",
+    "Almost there...",
   ];
 
   const navigate = useNavigate();
@@ -429,7 +431,7 @@ const CreatePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen bg-base-300">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
           <Link

@@ -3,10 +3,10 @@ const ProcessingState = ({ typewriterText, pdfLoading, pptLoading }) => {
 
   return (
     <div className="flex items-center justify-center py-8">
-      <div className="flex items-center gap-4">
-        <span className="loading loading-spinner loading-sm text-primary"></span>
+      <div className="flex items-center justify-center">
         <p className="text-lg text-primary font-mono font-bold">
           {typewriterText}
+          <span className="animate-pulse">|</span>
         </p>
       </div>
     </div>

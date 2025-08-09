@@ -5,7 +5,6 @@ import NoteCard from "../components/NoteCard";
 import FolderCard from "../components/FolderCard";
 import Breadcrumb from "../components/Breadcrumb";
 import CreateFolderModal from "../components/CreateFolderModal";
-import LoadingSpinner from "../components/LoadingSpinner";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
 import NotesNotFound from "../components/NotesNotFound";
@@ -99,28 +98,67 @@ const HomePage = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen bg-base-300">
+        <Navbar />
+        {isRateLimited && <RateLimitedUI />}
+        <div className="max-w-7xl mx-auto p-4 mt-2">
+          {/* Header Section with Breadcrumb */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+            <div className="flex-1">
+              <div className="mb-2">
+                <Breadcrumb
+                  path={breadcrumbPath}
+                  onNavigate={handleNavigateToFolder}
+                  className="text-lg sm:text-2xl font-bold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Loading Spinner */}
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <svg
+              className="w-8 h-8 animate-spin text-primary"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-base-300">
       <Navbar />
-
       {isRateLimited && <RateLimitedUI />}
 
       <div className="max-w-7xl mx-auto p-4 mt-2">
-        {/* Header Section with Breadcrumb and Actions */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div className="flex-1">
-            {/* Large Breadcrumb Navigation */}
             <div className="mb-2">
               <Breadcrumb
                 path={breadcrumbPath}
                 onNavigate={handleNavigateToFolder}
-                className="text-2xl font-bold"
+                className="text-lg sm:text-2xl font-bold"
               />
             </div>
-            {/* Stats Text */}
             <p className="text-base-content/60 text-sm">
               {folders.length > 0 || notes.length > 0 || currentFolder
                 ? `${folders.length} folders, ${notes.length} notes`

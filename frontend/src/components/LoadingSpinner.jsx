@@ -1,8 +1,8 @@
 const LoadingSpinner = () => {
   return (
-    <div className="min-h-screen bg-base-200 flex items-center justify-center">
+    <div className="min-h-screen bg-base-300 flex items-center justify-center">
       <svg
-        className="w-6 h-6 animate-spin text-primary"
+        className="w-8 h-8 animate-spin text-primary"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"

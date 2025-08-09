@@ -32,7 +32,7 @@ const PPTUploadForm = ({
         AI will generate structured notes automatically
       </span>
 
-      <div className="card-actions justify-end">
+      <div className="card-actions justify-end mt-5">
         <button
           type="submit"
           className={`btn min-w-[280px] ${
@@ -53,9 +53,8 @@ const PPTUploadForm = ({
           }
         >
           {pptLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="loading loading-spinner loading-sm text-black"></div>
-              <span className=" text-black font-mono">
+            <div className="flex items-center justify-center">
+              <span className="text-black font-mono">
                 {typewriterText}
                 <span className="animate-pulse">|</span>
               </span>

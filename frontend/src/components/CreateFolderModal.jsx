@@ -10,12 +10,13 @@ const CreateFolderModal = ({
   onFolderCreated,
 }) => {
   const [folderName, setFolderName] = useState("");
-  const [selectedColor, setSelectedColor] = useState("#3B82F6");
+  const [selectedColor, setSelectedColor] = useState("#1EB854");
   const [loading, setLoading] = useState(false);
 
   const colors = [
+    "#1EB854", // Green
+    "#3B82F6", // Blue
     "#EF4444", // Red
-    "#10B981", // Green
     "#F59E0B", // Yellow
     "#8B5CF6", // Purple
     "#F97316", // Orange
@@ -42,7 +43,7 @@ const CreateFolderModal = ({
       toast.success("Folder created successfully!");
       onClose();
       setFolderName("");
-      setSelectedColor("#3B82F6");
+      setSelectedColor("#10B981");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to create folder");
     } finally {
@@ -60,7 +61,7 @@ const CreateFolderModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-base-100 rounded-lg p-6 w-full max-w-md mx-4">
+      <div className="bg-base-100 rounded-2xl p-6 w-full max-w-md mx-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <FolderPlus className="h-5 w-5 text-primary" />

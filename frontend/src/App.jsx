@@ -9,17 +9,6 @@ import PrivateRoute from "./lib/PrivateRoute";
 const App = () => {
   return (
     <div className="relative h-full w-full">
-      {/* <div className="absolute inset-0 -z-10 h-full w-full items-center px-5 py-24 [background:radial-gradient(125%_125%_at_50%_10%,#000_60%,#00C853_150%)]" /> */}
-      <div
-  className="absolute inset-0 -z-10 h-full w-full"
-  style={{
-    background: `
-      radial-gradient(500px at 80% 20%, rgba(0, 200, 83, 0.25), transparent 60%),
-      radial-gradient(400px at 20% 80%, rgba(0, 200, 83, 0.25), transparent 60%),
-      #000
-    `,
-  }}
-/>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
