@@ -169,11 +169,11 @@ Every technical term gets this treatment:
 5. [Code example with explanation]
 
 CRITICAL EXAMPLES:
-❌ WRONG: "Pass by Reference: You can explicitly pass an array by reference..."
-✅ RIGHT: "**Pass by Reference**: A programming technique that allows functions to receive direct access to the original variable's memory location rather than a copy of its value..."
+WRONG: "Pass by Reference: You can explicitly pass an array by reference..."
+RIGHT: "**Pass by Reference**: A programming technique that allows functions to receive direct access to the original variable's memory location rather than a copy of its value..."
 
-❌ WRONG: "Array Initialization: You can initialize arrays with..."
-✅ RIGHT: "**Array Initialization**: A programming process that assigns initial values to array elements at the time of declaration..."
+WRONG: "Array Initialization: You can initialize arrays with..."
+RIGHT: "**Array Initialization**: A programming process that assigns initial values to array elements at the time of declaration..."
 
 QUALITY STANDARDS:
 - Every important point from the slides must be included

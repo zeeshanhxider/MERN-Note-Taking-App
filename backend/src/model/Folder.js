@@ -19,7 +19,7 @@ const folderSchema = new mongoose.Schema(
     },
     color: {
       type: String,
-      default: "#3B82F6", // Default blue color
+      default: "#10B981", // Default green color
     },
   },
   { timestamps: true }

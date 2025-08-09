@@ -5,6 +5,7 @@ import NoteCard from "../components/NoteCard";
 import FolderCard from "../components/FolderCard";
 import Breadcrumb from "../components/Breadcrumb";
 import CreateFolderModal from "../components/CreateFolderModal";
+import LoadingSpinner from "../components/LoadingSpinner";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
 import NotesNotFound from "../components/NotesNotFound";
@@ -97,6 +98,10 @@ const HomePage = () => {
     setFolders((prev) => prev.filter((folder) => folder._id !== folderId));
   };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -142,91 +147,54 @@ const HomePage = () => {
           </div>
         </div>
 
-        {loading && (
-          <div className="flex justify-center mt-24">
-            <div className="flex items-center gap-3 text-primary text-lg font-semibold">
-              <svg
-                className="w-6 h-6 animate-spin text-primary"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                />
-              </svg>
-              <span>Loading...</span>
-            </div>
-          </div>
+        {folders.length === 0 && notes.length === 0 && !isRateLimited && (
+          <NotesNotFound
+            currentFolder={currentFolder}
+            folderName={
+              breadcrumbPath.length > 1
+                ? breadcrumbPath[breadcrumbPath.length - 1].name
+                : null
+            }
+          />
         )}
 
-        {!loading &&
-          folders.length === 0 &&
-          notes.length === 0 &&
-          !isRateLimited && (
-            <NotesNotFound
-              currentFolder={currentFolder}
-              folderName={
-                breadcrumbPath.length > 1
-                  ? breadcrumbPath[breadcrumbPath.length - 1].name
-                  : null
-              }
-            />
-          )}
-
-        {!loading &&
-          (folders.length > 0 || notes.length > 0) &&
-          !isRateLimited && (
-            <div className="space-y-6">
-              {/* Folders Section */}
-              {folders.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-semibold text-base-content mb-3">
-                    Folders
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {folders.map((folder) => (
-                      <FolderCard
-                        key={folder._id}
-                        folder={folder}
-                        onFolderClick={handleFolderClick}
-                        onFolderUpdate={handleFolderUpdate}
-                        onFolderDelete={handleFolderDelete}
-                      />
-                    ))}
-                  </div>
+        {(folders.length > 0 || notes.length > 0) && !isRateLimited && (
+          <div className="space-y-6">
+            {/* Folders Section */}
+            {folders.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-base-content mb-3">
+                  Folders
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {folders.map((folder) => (
+                    <FolderCard
+                      key={folder._id}
+                      folder={folder}
+                      onFolderClick={handleFolderClick}
+                      onFolderUpdate={handleFolderUpdate}
+                      onFolderDelete={handleFolderDelete}
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Notes Section */}
-              {notes.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-semibold text-base-content mb-3">
-                    Notes
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {notes.map((note) => (
-                      <NoteCard
-                        key={note._id}
-                        note={note}
-                        setNotes={setNotes}
-                      />
-                    ))}
-                  </div>
+            {/* Notes Section */}
+            {notes.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-base-content mb-3">
+                  Notes
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {notes.map((note) => (
+                    <NoteCard key={note._id} note={note} setNotes={setNotes} />
+                  ))}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Create Folder Modal */}
         <CreateFolderModal
