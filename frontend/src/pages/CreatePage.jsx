@@ -68,6 +68,7 @@ const CreatePage = () => {
   // Typewriter effect for processing
   useEffect(() => {
     let interval;
+    let messageTimeout;
     let charIndex = 0;
 
     if (pdfLoading || pptLoading) {
@@ -79,16 +80,20 @@ const CreatePage = () => {
           setTypewriterText(currentMessage.slice(0, charIndex));
           charIndex++;
         } else {
+          // Clear the typing interval
+          clearInterval(interval);
+
           // Move to next message after a pause
-          setTimeout(() => {
-            setCurrentMessageIndex((prev) =>
-              prev === messages.length - 1 ? 0 : prev + 1
-            );
+          messageTimeout = setTimeout(() => {
+            setCurrentMessageIndex((prev) => {
+              const nextIndex = prev === messages.length - 1 ? 0 : prev + 1;
+              return nextIndex;
+            });
             charIndex = 0;
             setTypewriterText("");
-          }, 1000);
+          }, 1500); // Pause between messages
         }
-      }, 50); // Typing speed
+      }, 60); // Typing speed
     } else {
       setTypewriterText("");
       setCurrentMessageIndex(0);
@@ -96,6 +101,7 @@ const CreatePage = () => {
 
     return () => {
       if (interval) clearInterval(interval);
+      if (messageTimeout) clearTimeout(messageTimeout);
     };
   }, [pdfLoading, pptLoading, currentMessageIndex]);
 
