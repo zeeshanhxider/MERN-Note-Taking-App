@@ -2,10 +2,12 @@ import { useState } from "react";
 import api from "../lib/axios";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -77,14 +79,27 @@ const LoginPage = () => {
                   <label className="label">
                     <span className="label-text">Password</span>
                   </label>
-                  <input
-                    type="password"
-                    placeholder="Enter your password"
-                    className="input input-bordered"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      className="input input-bordered w-full pr-12"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="size-5" />
+                      ) : (
+                        <Eye className="size-5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="card-actions justify-end">

@@ -20,9 +20,10 @@ export const formatText = (text) => {
     '<pre class="bg-base-300 p-4 rounded-lg mt-2 mb-2 overflow-x-auto"><code class="text-sm font-mono">$2</code></pre>'
   );
 
-  // Handle malformed single-backtick code blocks (common AI mistake)
+  // Handle malformed single-backtick code blocks (common AI mistake) - only when it looks like actual code
+  // This should only match patterns like `javascript console.log('hello')` or `python print('hello')`
   formatted = formatted.replace(
-    /`(\w+)\s*([\s\S]*?)`/g,
+    /`(javascript|python|java|css|html|sql|bash|shell|cmd|powershell|typescript|jsx|tsx|json|xml|yaml|php|ruby|go|rust|cpp|c\+\+|csharp|c#)\s+([\s\S]*?)`/gi,
     '<pre class="bg-base-300 p-4 rounded-lg mt-2 mb-2 overflow-x-auto"><code class="text-sm font-mono">$2</code></pre>'
   );
 

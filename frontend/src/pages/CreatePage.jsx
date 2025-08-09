@@ -1,6 +1,5 @@
 import {
   ArrowLeftIcon,
-  Upload,
   FileText,
   Sparkles,
   FileCheck,
@@ -11,6 +10,7 @@ import {
   Edit,
   File,
   Presentation,
+  Info,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
@@ -41,6 +41,7 @@ const CreatePage = () => {
 
   // Text formatting preview
   const [showPreview, setShowPreview] = useState(false);
+  const [showFormatHelp, setShowFormatHelp] = useState(false);
 
   const processingMessages = [
     "Extracting text from PDF...",
@@ -130,9 +131,7 @@ const CreatePage = () => {
   const applySuggestion = (improvedContent) => {
     setContent(improvedContent);
     setShowAiPanel(false); // Close the AI panel
-    toast.success(
-      "Writing suggestions applied!"
-    );
+    toast.success("Writing suggestions applied!");
   };
 
   // Typewriter effect for processing
@@ -485,8 +484,15 @@ const CreatePage = () => {
 
                     <div className="form-control mb-4">
                       <label className="label">
-                        <span className="label-text text-base font-semibold">
+                        <span className="label-text text-base font-semibold flex items-center gap-2">
                           Content
+                          <button
+                            type="button"
+                            onClick={() => setShowFormatHelp(!showFormatHelp)}
+                            className="btn btn-ghost btn-xs p-1 h-auto min-h-0"
+                          >
+                            <Info className="size-4 text-base-content/60 hover:text-base-content" />
+                          </button>
                         </span>
                         {hasFormatting(content) && (
                           <div className="label-text-alt">
@@ -511,6 +517,56 @@ const CreatePage = () => {
                         )}
                       </label>
 
+                      {/* Formatting Help Section */}
+                      {showFormatHelp && (
+                        <div className="bg-base-200 rounded-lg p-4 mb-3 text-sm">
+                          <h4 className="font-bold text-base mb-3 text-base-content">
+                            📝 Formatting Guide
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div>
+                              <span className="font-semibold text-primary">
+                                Text Formatting:
+                              </span>
+                              <div className="text-xs opacity-75 mt-1 space-y-1">
+                                <div>**bold text**</div>
+                                <div>*italic text*</div>
+                                <div>__underlined text__</div>
+                              </div>
+                            </div>
+                            <div>
+                              <span className="font-semibold text-primary">
+                                Headings:
+                              </span>
+                              <div className="text-xs opacity-75 mt-1 space-y-1">
+                                <div># Large Heading</div>
+                                <div>## Medium Heading</div>
+                                <div>### Small Heading</div>
+                              </div>
+                            </div>
+                            <div>
+                              <span className="font-semibold text-primary">
+                                Code:
+                              </span>
+                              <div className="text-xs opacity-75 mt-1 space-y-1">
+                                <div>`inline code`</div>
+                                <div>```code block```</div>
+                              </div>
+                            </div>
+                            <div>
+                              <span className="font-semibold text-primary">
+                                Lists:
+                              </span>
+                              <div className="text-xs opacity-75 mt-1 space-y-1">
+                                <div>- List item</div>
+                                <div>* Also list item</div>
+                              </div>
+                            </div>
+                            <div className="sm:col-span-2 lg:col-span-1"></div>
+                          </div>
+                        </div>
+                      )}
+
                       {showPreview && hasFormatting(content) ? (
                         <div
                           className="textarea textarea-bordered min-h-80 resize-y bg-base-100 prose prose-sm max-w-none p-4"
@@ -521,14 +577,14 @@ const CreatePage = () => {
                       ) : (
                         <textarea
                           className="textarea textarea-bordered min-h-80 resize-y"
-                          placeholder="Write your note here... (Try: **bold**, # heading, ## subheading)"
+                          placeholder="Write your note here..."
                           value={content}
                           onChange={(e) => setContent(e.target.value)}
                         />
                       )}
 
                       {/* AI Features Buttons */}
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex gap-2 mt-4">
                         <button
                           type="button"
                           onClick={checkWriting}
@@ -637,7 +693,7 @@ const CreatePage = () => {
                       </div>
                     )}
 
-                    <div className="card-actions justify-end">
+                    <div className="card-actions justify-end mt-6">
                       <button
                         type="submit"
                         className="btn btn-primary"
@@ -680,10 +736,10 @@ const CreatePage = () => {
                         type="submit"
                         className={`btn min-w-[280px] ${
                           pdfLoading
-                            ? "btn-secondary"
+                            ? "btn-primary"
                             : selectedFile
-                            ? "btn-secondary"
-                            : "btn-secondary opacity-60 cursor-not-allowed"
+                            ? "btn-primary"
+                            : "btn-primary opacity-60 cursor-not-allowed"
                         }`}
                         disabled={!selectedFile && !pdfLoading}
                         onClick={
@@ -744,10 +800,10 @@ const CreatePage = () => {
                         type="submit"
                         className={`btn min-w-[280px] ${
                           pptLoading
-                            ? "btn-secondary"
+                            ? "btn-primary"
                             : selectedFile
-                            ? "btn-secondary"
-                            : "btn-secondary opacity-60 cursor-not-allowed"
+                            ? "btn-primary"
+                            : "btn-primary opacity-60 cursor-not-allowed"
                         }`}
                         disabled={!selectedFile && !pptLoading}
                         onClick={

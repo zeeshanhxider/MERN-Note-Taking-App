@@ -213,6 +213,21 @@ const NoteDetailPage = () => {
     );
   }
 
+  if (!note) {
+    return (
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-base-content mb-4">
+            Note not found
+          </h2>
+          <Link to="/" className="btn btn-primary">
+            Back to Notes
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-base-200">
       <div className="container mx-auto px-4 py-8">
@@ -325,37 +340,37 @@ const NoteDetailPage = () => {
                     )}
 
                     {/* AI Features */}
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-2 mt-4">
                       <button
-                          type="button"
-                          onClick={checkWriting}
-                          disabled={isCheckingWriting || !content.trim()}
-                          className="btn btn-sm btn-outline btn-primary"
-                        >
-                          {isCheckingWriting ? (
-                            <span className="loading loading-spinner loading-xs"></span>
-                          ) : (
-                            <Wand2 className="size-4" />
-                          )}
-                          {isCheckingWriting
-                            ? "Analyzing..."
-                            : "Writing Assistant"}
-                        </button>
+                        type="button"
+                        onClick={checkWriting}
+                        disabled={isCheckingWriting || !note.content.trim()}
+                        className="btn btn-sm btn-outline btn-primary"
+                      >
+                        {isCheckingWriting ? (
+                          <span className="loading loading-spinner loading-xs"></span>
+                        ) : (
+                          <Wand2 className="size-4" />
+                        )}
+                        {isCheckingWriting
+                          ? "Analyzing..."
+                          : "Writing Assistant"}
+                      </button>
                       <button
-                          type="button"
-                          onClick={generateSummary}
-                          disabled={isGeneratingSummary || !content.trim()}
-                          className="btn btn-sm btn-outline btn-secondary"
-                        >
-                          {isGeneratingSummary ? (
-                            <span className="loading loading-spinner loading-xs"></span>
-                          ) : (
-                            <Sparkles className="size-4" />
-                          )}
-                          {isGeneratingSummary
-                            ? "Summarizing..."
-                            : "Generate Summary"}
-                        </button>
+                        type="button"
+                        onClick={generateSummary}
+                        disabled={isGeneratingSummary || !note.content.trim()}
+                        className="btn btn-sm btn-outline btn-secondary"
+                      >
+                        {isGeneratingSummary ? (
+                          <span className="loading loading-spinner loading-xs"></span>
+                        ) : (
+                          <Sparkles className="size-4" />
+                        )}
+                        {isGeneratingSummary
+                          ? "Summarizing..."
+                          : "Generate Summary"}
+                      </button>
                     </div>
                   </div>
 
@@ -391,6 +406,7 @@ const NoteDetailPage = () => {
                                     Writing Improvements
                                   </h4>
                                   <button
+                                    type="button"
                                     onClick={applySuggestion}
                                     className="btn btn-xs btn-primary"
                                   >
@@ -414,6 +430,7 @@ const NoteDetailPage = () => {
                                     AI Summary
                                   </h4>
                                   <button
+                                    type="button"
                                     onClick={addSummary}
                                     className="btn btn-xs btn-secondary"
                                   >
@@ -433,7 +450,7 @@ const NoteDetailPage = () => {
                     </div>
                   )}
 
-                  <div className="flex justify-end items-center mt-4">
+                  <div className="flex justify-end items-center mt-6">
                     <div className="flex gap-3">
                       <button
                         onClick={handleCancel}

@@ -45,7 +45,6 @@ export const processPptAndCreateNote = async (req, res) => {
     console.log("File path:", filePath);
 
     let extractedText = "";
-    let title = `Notes: ${fileName.replace(/\.(ppt|pptx)$/i, "")}`;
 
     try {
       // Extract text from PowerPoint file
@@ -90,6 +89,7 @@ export const processPptAndCreateNote = async (req, res) => {
 
     // Generate AI-enhanced notes using Cohere
     console.log("Generating AI notes...");
+    let title = "Notes from PowerPoint";
     let content = extractedText;
     let generatedContent = "";
 
@@ -108,7 +108,7 @@ Create well-structured notes that are:
 - Self-explanatory with proper context
 
 OUTPUT FORMAT:
-Start with: TITLE: Notes: ${fileName.replace(/\.(ppt|pptx)$/i, "")}
+Start with: TITLE: [Generate an appropriate descriptive title based on the content]
 
 Then: CONTENT:
 [Your organized notes here]
@@ -241,7 +241,7 @@ Remember: Start with "TITLE: " then "CONTENT:" exactly as shown. Make these the 
 
         title = titleMatch
           ? titleMatch[1].trim()
-          : `Notes: ${fileName.replace(/\.(ppt|pptx)$/i, "")}`;
+          : "AI-Generated Notes from PowerPoint";
         content = contentMatch ? contentMatch[1].trim() : generatedContent;
       }
     } catch (aiError) {
@@ -278,7 +278,7 @@ Remember: Start with "TITLE: " then "CONTENT:" exactly as shown. Make these the 
       } else {
         // Fallback: Use the original extracted text as content
         console.log("Using original extracted text as fallback");
-        title = `Notes: ${fileName.replace(/\.(ppt|pptx)$/i, "")}`;
+        title = "AI-Generated Notes from PowerPoint";
         content = extractedText;
       }
     }
